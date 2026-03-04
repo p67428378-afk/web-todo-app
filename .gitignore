@@ -1,19 +1,16 @@
-# File: .gitignore
-# Python
+# Flask
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-*.env
 .flaskenv
+.env
+instance/
 
-# Editor
-.vscode/
-.idea/
+# Python
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
 
-# OS
+# OS generated files
 .DS_Store
 Thumbs.db
