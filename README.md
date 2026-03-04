@@ -1,90 +1,121 @@
-# Web Todo App - Comment Liking Feature (SCRUM-12)
+# Web Todo App with Comment Liking Feature
 
-This branch introduces the functionality for users to like and unlike comments within the application, along with displaying the like count.
+This project implements a simple web application using Flask for the backend and basic HTML/CSS/JavaScript for the frontend. It demonstrates how users can like and unlike comments, view like counts, and sort comments by popularity. It also includes API endpoints to simulate user and comment deletion for edge case testing.
 
-## Database Changes
+## Features
 
-The following changes have been applied to the database schema:
+-   **Like/Unlike Comments**: Users can like and unlike comments. A user can only like a comment once.
+-   **Display Like Count**: The current number of likes for each comment is displayed.
+-   **Sort by Popularity**: Comments can be sorted based on their like count.
+-   **User Account Deletion (Simulated)**: API endpoint to simulate a user deleting their account, which removes all their associated likes.
+-   **Comment Deletion (Simulated)**: API endpoint to simulate a comment being deleted, which removes the comment and all its likes.
 
--   An `likes_count` column has been added to the `comments` table to store the total number of likes for each comment.
--   A new `comment_likes` table has been created to track which user liked which comment.
+## Project Structure
 
-To apply these changes to your local database, run the SQL script:
-
-```sql
--- File: database_schema.sql
-
--- Add a likes_count column to the existing comments table
-ALTER TABLE comments
-ADD COLUMN likes_count INTEGER DEFAULT 0;
-
--- Create a new table to store comment likes
-CREATE TABLE comment_likes (
-    user_id INTEGER NOT NULL,
-    comment_id INTEGER NOT NULL,
-    PRIMARY KEY (user_id, comment_id),
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (comment_id) REFERENCES comments(comment_id) ON DELETE CASCADE
-);
+```
+.gitignore
+app.py
+requirements.txt
+README.md
+static/
+â””â”€â”€ css/
+    â””â”€â”€ style.css
+â””â”€â”€ js/
+    â””â”€â”€ script.js
+templates/
+â””â”€â”€ index.html
 ```
 
-**Note**: The `ON DELETE CASCADE` clauses ensure that:
--   If a user account is deleted, all their associated likes are automatically removed.
--   If a comment is deleted, all its associated likes are automatically removed.
-This addresses the "Edge Case: User Account Deletion" and "Edge Case: Comment Deletion" acceptance criteria.
+-   `app.py`: The main Flask application, defining routes for the web pages and API endpoints.
+-   `requirements.txt`: Lists the Python dependencies.
+-   `static/css/style.css`: Contains the styling for the web application.
+-   `static/js/script.js`: Handles frontend interactivity, including like/unlike actions and sorting.
+-   `templates/index.html`: The main HTML template that displays the comments.
+
+## Setup and Run Instructions
+
+Follow these steps to set up and run the application locally:
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/p67428378-afk/web-todo-app.git
+cd web-todo-app
+```
+
+### 2. Create and Activate a Virtual Environment
+
+It's recommended to use a virtual environment to manage project dependencies.
+
+```bash
+python -m venv venv
+# On Windows
+venv\Scripts\activate
+# On macOS/Linux
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+
+Install the required Python packages using pip:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Run the Flask Application
+
+Set the Flask application and run it:
+
+```bash
+export FLASK_APP=app.py
+export FLASK_ENV=development # For development mode with debug features
+flask run
+```
+
+Alternatively, you can run it directly:
+
+```bash
+python app.py
+```
+
+The application will typically run on `http://127.0.0.1:5000/`. Open this URL in your web browser.
+
+## Usage
+
+-   **Liking/Unliking**: Click the "Like" button next to any comment to toggle its like status. The like count will update accordingly.
+-   **Sorting**: Use the "Default" and "Popularity" buttons to sort the comments.
 
 ## API Endpoints
 
-The following API endpoints have been added/modified to support the comment liking feature:
+The following API endpoints are available (used by the frontend):
 
-### 1. Like a Comment
+-   `GET /api/comments`: Get all comments. Supports `?sort_by=popularity`.
+-   `POST /api/like/<comment_id>`: Like a comment. Requires `user_id` in JSON body.
+-   `POST /api/unlike/<comment_id>`: Unlike a comment. Requires `user_id` in JSON body.
+-   `POST /api/delete_user_likes/<user_id>`: (Simulated) Remove all likes by a specific user.
+-   `POST /api/delete_comment/<comment_id>`: (Simulated) Delete a comment and its likes.
 
--   **Endpoint**: `POST /comments/<int:comment_id>/like`
--   **Description**: Allows the authenticated user to like a specific comment. A user can only like a comment once.
--   **Authentication**: Required (assumes `current_user` is available).
--   **Responses**:
-    -   `200 OK`: `{"message": "Comment liked successfully"}`
-    -   `401 Unauthorized`: If the user is not authenticated.
-    -   `404 Not Found`: If the `comment_id` does not exist.
-    -   `409 Conflict`: `{"message": "Comment already liked by this user"}`
+## Testing Edge Cases (Manual)
 
-### 2. Unlike a Comment
+You can manually test the simulated edge cases using tools like `curl` or Postman:
 
--   **Endpoint**: `DELETE /comments/<int:comment_id>/like`
--   **Description**: Allows the authenticated user to remove their like from a specific comment.
--   **Authentication**: Required.
--   **Responses**:
-    -   `200 OK`: `{"message": "Comment unliked successfully"}`
-    -   `401 Unauthorized`: If the user is not authenticated.
-    -   `404 Not Found`: If the `comment_id` does not exist or the user has not liked the comment.
+### Simulate User Account Deletion
 
-### 3. Get Comment Details with Like Status
+To remove all likes from `user123` (as used in `script.js`):
 
--   **Endpoint**: `GET /comments/<int:comment_id>`
--   **Description**: Retrieves details for a specific comment, including its total `likes_count` and a boolean `user_liked` indicating if the current authenticated user has liked it.
--   **Authentication**: Optional (if authenticated, `user_liked` will be accurate; otherwise, it might default to `false` or be omitted).
--   **Responses**:
-    -   `200 OK`:
-        ```json
-        {
-            "comment_id": 123,
-            "content": "This is a sample comment content.",
-            "likes_count": 5,
-            "user_liked": true
-        }
-        ```
-    -   `404 Not Found`: If the `comment_id` does not exist.
+```bash
+curl -X POST http://127.0.0.1:5000/api/delete_user_likes/user123
+```
 
-## Backend Implementation Notes
+Refresh the main page to see the updated like counts.
 
--   The core logic is implemented in `app/routes/comment_likes.py`.
--   It uses a `MockDB` and `MockUser` for demonstration purposes. In a production environment, these should be replaced with your actual database ORM (e.g., SQLAlchemy) and user authentication system.
--   The `likes_count` in the `comments` table is automatically incremented/decremented upon liking/unliking.
+### Simulate Comment Deletion
 
-## Future Considerations
+To delete comment with ID `1`:
 
--   **Comment Sorting**: The `likes_count` column can be used to implement sorting comments by popularity. This would involve modifying the comment retrieval queries.
--   **Frontend Integration**: The frontend would need to be updated to:
-    -   Display the like count.
-    -   Render a "Like" button that visually changes based on `user_liked` status.
-    -   Call the `POST` and `DELETE` like endpoints.
+```bash
+curl -X POST http://127.0.0.1:5000/api/delete_comment/1
+```
+
+Refresh the main page to see comment `1` removed.
