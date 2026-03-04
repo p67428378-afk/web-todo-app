@@ -1,0 +1,87 @@
+/* File: static/css/style.css */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.comment-card {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.comment-card p {
+    margin: 0;
+    flex-grow: 1;
+}
+
+.comment-actions {
+    display: flex;
+    align-items: center;
+}
+
+.like-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.like-button:hover {
+    background-color: #0056b3;
+}
+
+.like-button .heart-icon {
+    margin-right: 5px;
+}
+
+.like-button.liked {
+    background-color: #28a745; /* Green for liked state */
+}
+
+.like-button.liked:hover {
+    background-color: #218838;
+}
+
+.sort-options button {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.sort-options button:hover {
+    background-color: #5a6268;
+}
