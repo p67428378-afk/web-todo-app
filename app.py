@@ -80,12 +80,20 @@ def get_comments():
     """
     Returns all comments, optionally sorted by popularity.
     """
-    # No need for global comments_db here as we are only reading its contents
     sort_by = request.args.get('sort_by')
+    
+    comments_list = []
+    for comment_id, comment_data in comments_db.items():
+        comment_data_copy = comment_data.copy()
+        comment_data_copy['id'] = comment_id
+        comments_list.append(comment_data_copy)
+
     if sort_by == 'popularity':
-        sorted_comments = dict(sorted(comments_db.items(), key=lambda item: item[1]['likes'], reverse=True))
+        # Sort the list of comment dictionaries by 'likes' in descending order
+        sorted_comments = sorted(comments_list, key=lambda comment: comment['likes'], reverse=True)
         return jsonify(sorted_comments), 200
-    return jsonify(comments_db), 200
+    
+    return jsonify(comments_list), 200
 
 # Edge case: Simulate user account deletion
 @app.route('/api/delete_user_likes/<user_id>', methods=['POST'])
