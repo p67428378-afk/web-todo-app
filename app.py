@@ -12,11 +12,25 @@ app = Flask(__name__)
 
 # In-memory store for comments and their likes.
 # In a real application, this would be a database.
-comments_db = {
+# Define the initial state of comments_db
+_initial_comments_db_state = {
     "1": {"text": "Great post!", "likes": 0, "liked_by": []},
     "2": {"text": "Very insightful.", "likes": 0, "liked_by": []},
     "3": {"text": "I disagree with this point.", "likes": 0, "liked_by": []},
 }
+
+# Global variable for comments_db
+comments_db = {}
+
+def initialize_comments_db():
+    """
+    Initializes or resets the comments_db to its default state.
+    """
+    global comments_db
+    comments_db = {k: v.copy() for k, v in _initial_comments_db_state.items()}
+
+# Initialize comments_db when the application starts
+initialize_comments_db()
 
 @app.route('/')
 def index():
@@ -134,6 +148,15 @@ def delete_comment_endpoint(comment_id: str):
         del comments_db[comment_id]
         return jsonify({"message": f"Comment {comment_id} and its likes deleted."}), 200
     return jsonify({"error": "Comment not found"}), 404
+
+@app.route('/api/reset_comments', methods=['POST'])
+def reset_comments():
+    """
+    Resets the comments_db to its initial state.
+    This endpoint is primarily for testing purposes.
+    """
+    initialize_comments_db()
+    return jsonify({"message": "Comments database reset to initial state."}), 200
 
 
 if __name__ == '__main__':
