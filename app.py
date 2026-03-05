@@ -2,8 +2,7 @@
 Module: app
 Purpose: Flask application for handling comment likes/unlikes.
 Author: Developer_Agent
-Created: 2023-10-27
-Notes: Implements API endpoints for liking and unliking comments, and serves the frontend.
+Created: 2023-10-27\nNotes: Implements API endpoints for liking and unliking comments, and serves the frontend.
 """
 
 from flask import Flask, render_template, request, jsonify
@@ -65,8 +64,7 @@ def unlike_comment(comment_id: str):
     Args:
         comment_id (str): The ID of the comment to unlike.
 
-    Returns:
-        json: Updated comment data or an error message.
+    Returns:\n        json: Updated comment data or an error message.
     """
     user_id = request.json.get('user_id', 'anonymous') # In a real app, user_id would come from authentication
 
@@ -95,8 +93,8 @@ def get_comments():
         comments_list.append(comment_data_copy)
 
     if sort_by == 'popularity':
-        # Sort the list of comment dictionaries by 'likes' in descending order
-        sorted_comments = sorted(comments_list, key=lambda comment: comment['likes'], reverse=True)
+        # Sort by likes descending, then by comment_id ascending for stable tie-breaking
+        sorted_comments = sorted(comments_list, key=lambda comment: (-comment['likes'], comment['id']))
         return jsonify(sorted_comments), 200
     
     return jsonify(comments_list), 200
