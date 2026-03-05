@@ -2,7 +2,8 @@
 Module: app
 Purpose: Flask application for handling comment likes/unlikes.
 Author: Developer_Agent
-Created: 2023-10-27\nNotes: Implements API endpoints for liking and unliking comments, and serves the frontend.
+Created: 2023-10-27
+Notes: Implements API endpoints for liking and unliking comments, and serves the frontend.
 """
 
 from flask import Flask, render_template, request, jsonify
@@ -64,7 +65,8 @@ def unlike_comment(comment_id: str):
     Args:
         comment_id (str): The ID of the comment to unlike.
 
-    Returns:\n        json: Updated comment data or an error message.
+    Returns:
+        json: Updated comment data or an error message.
     """
     user_id = request.json.get('user_id', 'anonymous') # In a real app, user_id would come from authentication
 
@@ -87,12 +89,22 @@ def get_comments():
     sort_by = request.args.get('sort_by')
     
     comments_list = []
-    for comment_id, comment_data in app.comments_db.items():
+    # Ensure we are working with the latest state of comments from app.comments_db
+    # Iterate over a copy of the items to avoid issues if app.comments_db is modified during iteration (unlikely here)
+    for comment_id, comment_data in list(app.comments_db.items()):
         comment_data_copy = comment_data.copy()
         comment_data_copy['id'] = comment_id
         comments_list.append(comment_data_copy)
 
     if sort_by == 'popularity':
+        # Ensure likes are integers for robust sorting, though they should be already
+        for comment in comments_list:
+            if not isinstance(comment['likes'], int):
+                try:
+                    comment['likes'] = int(comment['likes'])
+                except (ValueError, TypeError):
+                    comment['likes'] = 0 # Default to 0 if conversion fails
+        
         # Sort by likes descending, then by comment_id ascending for stable tie-breaking
         sorted_comments = sorted(comments_list, key=lambda comment: (-comment['likes'], comment['id']))
         return jsonify(sorted_comments), 200
@@ -112,8 +124,8 @@ def delete_user_likes(user_id: str):
         json: A message indicating the outcome.
     """
     likes_removed_count = 0
-    for comment_id, comment in app.comments_db.items():
-        # Create a mutable copy of liked_by for safe modification during iteration
+    # Iterate over a copy of items to allow modification of app.comments_db during iteration
+    for comment_id, comment in list(app.comments_db.items()):
         if user_id in comment['liked_by']:
             comment['liked_by'].remove(user_id)
             comment['likes'] -= 1
