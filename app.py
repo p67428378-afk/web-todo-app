@@ -36,6 +36,7 @@ def like_comment(comment_id: str):
     Returns:
         json: Updated comment data or an error message.
     """
+    global comments_db # Explicitly declare comments_db as global
     user_id = request.json.get('user_id', 'anonymous') # In a real app, user_id would come from authentication
 
     if comment_id not in comments_db:
@@ -60,6 +61,7 @@ def unlike_comment(comment_id: str):
     Returns:
         json: Updated comment data or an error message.
     """
+    global comments_db # Explicitly declare comments_db as global
     user_id = request.json.get('user_id', 'anonymous') # In a real app, user_id would come from authentication
 
     if comment_id not in comments_db:
@@ -78,6 +80,7 @@ def get_comments():
     """
     Returns all comments, optionally sorted by popularity.
     """
+    # No need for global comments_db here as we are only reading its contents
     sort_by = request.args.get('sort_by')
     if sort_by == 'popularity':
         sorted_comments = dict(sorted(comments_db.items(), key=lambda item: item[1]['likes'], reverse=True))
@@ -96,8 +99,10 @@ def delete_user_likes(user_id: str):
     Returns:
         json: A message indicating the outcome.
     """
+    global comments_db # Explicitly declare comments_db as global
     likes_removed_count = 0
     for comment_id, comment in comments_db.items():
+        # Create a mutable copy of liked_by for safe modification during iteration
         if user_id in comment['liked_by']:
             comment['liked_by'].remove(user_id)
             comment['likes'] -= 1
@@ -116,6 +121,7 @@ def delete_comment_endpoint(comment_id: str):
     Returns:
         json: A message indicating the outcome.
     """
+    global comments_db # Explicitly declare comments_db as global
     if comment_id in comments_db:
         del comments_db[comment_id]
         return jsonify({"message": f"Comment {comment_id} and its likes deleted."}), 200
