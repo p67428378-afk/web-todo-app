@@ -13,11 +13,18 @@ class CommentStore:
     def reset(self):
         self.comments = copy.deepcopy(self._initial_state)
 
-# Create a single instance of the CommentStore at the module level
-comment_store = CommentStore()
+# Use a singleton pattern for CommentStore to ensure it's initialized only once
+_comment_store_instance = None
+
+def get_comment_store():
+    global _comment_store_instance
+    if _comment_store_instance is None:
+        _comment_store_instance = CommentStore()
+    return _comment_store_instance
 
 def create_app():
     app = Flask(__name__)
+    comment_store = get_comment_store() # Get the singleton instance
 
     @app.route('/')
     def index():
