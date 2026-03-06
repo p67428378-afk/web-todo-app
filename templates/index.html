@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comments with Likes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Comments</h1>
+        <div class="sort-options">
+            Sort by: 
+            <button onclick="sortComments('default')">Default</button>
+            <button onclick="sortComments('popularity')">Popularity</button>
+        </div>
+        <div id="comments-list">
+            {% for comment_id, comment in comments.items() %}
+            <div class="comment-card" id="comment-{{ comment_id }}">
+                <p>{{ comment.text }}</p>
+                <div class="comment-actions">
+                    <button class="like-button" data-comment-id="{{ comment_id }}">
+                        <span class="heart-icon">&#x2665;</span> <span class="like-count">{{ comment.likes }}</span> Like
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

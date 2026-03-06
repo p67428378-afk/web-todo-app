@@ -1,0 +1,16 @@
+# Flask
+__pycache__/
+*.pyc
+.flaskenv
+.env
+instance/
+
+# Python
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# OS generated files
+.DS_Store
+Thumbs.db
