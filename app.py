@@ -1,36 +1,30 @@
 import copy
 from flask import Flask, render_template, request, jsonify
 
-# Define the initial state of comments_db
-_initial_comments_db_state = {
-    "1": {"text": "Great post!", "likes": 0, "liked_by": []},
-    "2": {"text": "Very insightful.", "likes": 0, "liked_by": []},
-    "3": {"text": "I disagree with this point.", "likes": 0, "liked_by": []},
-}
+class CommentStore:
+    def __init__(self):
+        self._initial_state = {
+            "1": {"text": "Great post!", "likes": 0, "liked_by": []},
+            "2": {"text": "Very insightful.", "likes": 0, "liked_by": []},
+            "3": {"text": "I disagree with this point.", "likes": 0, "liked_by": []},
+        }
+        self.comments = copy.deepcopy(self._initial_state)
 
-# Use a module-level global dictionary for comments_db
-# Initialize it directly here using deepcopy for full independence
-comments_db = copy.deepcopy(_initial_comments_db_state)
+    def reset(self):
+        self.comments = copy.deepcopy(self._initial_state)
 
-def initialize_comments_db():
-    """
-    Resets the comments_db to its default state.
-    """
-    # Directly clear and update the existing global dictionary using deepcopy
-    comments_db.clear()
-    comments_db.update(copy.deepcopy(_initial_comments_db_state))
+# Create a single instance of the CommentStore at the module level
+comment_store = CommentStore()
 
 def create_app():
     app = Flask(__name__)
-
-    # Routes will now operate on the already initialized module-level comments_db
 
     @app.route('/')
     def index():
         """
         Renders the main page with comments.
         """
-        return render_template('index.html', comments=comments_db)
+        return render_template('index.html', comments=comment_store.comments)
 
     @app.route('/api/like/<comment_id>', methods=['POST'])
     def like_comment(comment_id: str):
@@ -45,10 +39,10 @@ def create_app():
         """
         user_id = request.json.get('user_id', 'anonymous') # In a real app, user_id would come from authentication
 
-        if comment_id not in comments_db:
+        if comment_id not in comment_store.comments:
             return jsonify({"error": "Comment not found"}), 404
 
-        comment = comments_db[comment_id]
+        comment = comment_store.comments[comment_id]
         if user_id in comment['liked_by']:
             return jsonify({"message": "User already liked this comment", "comment": comment}), 200
         
@@ -69,16 +63,17 @@ def create_app():
         """
         user_id = request.json.get('user_id', 'anonymous') # In a real app, user_id would come from authentication
 
-        if comment_id not in comments_db:
+        if comment_id not in comment_store.comments:
             return jsonify({"error": "Comment not found"}), 404
 
-        comment = comments_db[comment_id]
+        comment = comment_store.comments[comment_id]
         if user_id not in comment['liked_by']:
             return jsonify({"message": "User has not liked this comment", "comment": comment}), 200
         
         comment['likes'] -= 1
         comment['liked_by'].remove(user_id)
-        return jsonify({"message": "Comment unliked successfully", "comment": comment}), 200\n
+        return jsonify({"message": "Comment unliked successfully", "comment": comment}), 200
+
     @app.route('/api/comments', methods=['GET'])
     def get_comments():
         """
@@ -87,7 +82,7 @@ def create_app():
         sort_by = request.args.get('sort_by')
         
         comments_list = []
-        for comment_id, comment_data in list(comments_db.items()):
+        for comment_id, comment_data in list(comment_store.comments.items()):
             comment_data_copy = comment_data.copy()
             comment_data_copy['id'] = comment_id
             comments_list.append(comment_data_copy)
@@ -117,7 +112,7 @@ def create_app():
             json: A message indicating the outcome.
         """
         likes_removed_count = 0
-        for comment_id, comment in list(comments_db.items()):
+        for comment_id, comment in list(comment_store.comments.items()):
             if user_id in comment['liked_by']:
                 comment['liked_by'].remove(user_id)
                 comment['likes'] -= 1
@@ -135,8 +130,8 @@ def create_app():
         Returns:
             json: A message indicating the outcome.
         """
-        if comment_id in comments_db:
-            del comments_db[comment_id]
+        if comment_id in comment_store.comments:
+            del comment_store.comments[comment_id]
             return jsonify({"message": f"Comment {comment_id} and its likes deleted."}), 200
         return jsonify({"error": "Comment not found"}), 404
 
@@ -146,7 +141,7 @@ def create_app():
         Resets the comments_db to its initial state.
         This endpoint is primarily for testing purposes.
         """
-        initialize_comments_db()
+        comment_store.reset()
         return jsonify({"message": "Comments database reset to initial state."}), 200
     
     return app
