@@ -17,21 +17,25 @@ _initial_comments_db_state = {
     "3": {"text": "I disagree with this point.", "likes": 0, "liked_by": []},
 }
 
-def initialize_app_comments_db():
-    """
-    Initializes or resets the app.comments_db to its default state.
-    """
-    app.comments_db = {k: v.copy() for k, v in _initial_comments_db_state.items()}
+# Use a module-level global dictionary for comments_db
+comments_db = {}
 
-# Initialize app.comments_db when the application starts
-initialize_app_comments_db()
+def initialize_comments_db():
+    """
+    Initializes or resets the comments_db to its default state.
+    """
+    global comments_db
+    comments_db = {k: v.copy() for k, v in _initial_comments_db_state.items()}
+
+# Initialize comments_db when the application starts
+initialize_comments_db()
 
 @app.route('/')
 def index():
     """
     Renders the main page with comments.
     """
-    return render_template('index.html', comments=app.comments_db)
+    return render_template('index.html', comments=comments_db)
 
 @app.route('/api/like/<comment_id>', methods=['POST'])
 def like_comment(comment_id: str):
@@ -46,10 +50,10 @@ def like_comment(comment_id: str):
     """
     user_id = request.json.get('user_id', 'anonymous') # In a real app, user_id would come from authentication
 
-    if comment_id not in app.comments_db:
+    if comment_id not in comments_db:
         return jsonify({"error": "Comment not found"}), 404
 
-    comment = app.comments_db[comment_id]
+    comment = comments_db[comment_id]
     if user_id in comment['liked_by']:
         return jsonify({"message": "User already liked this comment", "comment": comment}), 200
     
@@ -70,10 +74,10 @@ def unlike_comment(comment_id: str):
     """
     user_id = request.json.get('user_id', 'anonymous') # In a real app, user_id would come from authentication
 
-    if comment_id not in app.comments_db:
+    if comment_id not in comments_db:
         return jsonify({"error": "Comment not found"}), 404
 
-    comment = app.comments_db[comment_id]
+    comment = comments_db[comment_id]
     if user_id not in comment['liked_by']:
         return jsonify({"message": "User has not liked this comment", "comment": comment}), 200
     
@@ -89,9 +93,9 @@ def get_comments():
     sort_by = request.args.get('sort_by')
     
     comments_list = []
-    # Ensure we are working with the latest state of comments from app.comments_db
-    # Iterate over a copy of the items to avoid issues if app.comments_db is modified during iteration (unlikely here)
-    for comment_id, comment_data in list(app.comments_db.items()):
+    # Ensure we are working with the latest state of comments from comments_db
+    # Iterate over a copy of the items to avoid issues if comments_db is modified during iteration (unlikely here)
+    for comment_id, comment_data in list(comments_db.items()):
         comment_data_copy = comment_data.copy()
         comment_data_copy['id'] = comment_id
         comments_list.append(comment_data_copy)
@@ -124,8 +128,8 @@ def delete_user_likes(user_id: str):
         json: A message indicating the outcome.
     """
     likes_removed_count = 0
-    # Iterate over a copy of items to allow modification of app.comments_db during iteration
-    for comment_id, comment in list(app.comments_db.items()):
+    # Iterate over a copy of items to allow modification of comments_db during iteration
+    for comment_id, comment in list(comments_db.items()):
         if user_id in comment['liked_by']:
             comment['liked_by'].remove(user_id)
             comment['likes'] -= 1
@@ -144,18 +148,18 @@ def delete_comment_endpoint(comment_id: str):
     Returns:
         json: A message indicating the outcome.
     """
-    if comment_id in app.comments_db:
-        del app.comments_db[comment_id]
+    if comment_id in comments_db:
+        del comments_db[comment_id]
         return jsonify({"message": f"Comment {comment_id} and its likes deleted."}), 200
     return jsonify({"error": "Comment not found"}), 404
 
 @app.route('/api/reset_comments', methods=['POST'])
 def reset_comments():
     """
-    Resets the app.comments_db to its initial state.
+    Resets the comments_db to its initial state.
     This endpoint is primarily for testing purposes.
     """
-    initialize_app_comments_db()
+    initialize_comments_db()
     return jsonify({"message": "Comments database reset to initial state."}), 200
 
 
