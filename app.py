@@ -1,3 +1,4 @@
+import copy
 from flask import Flask, render_template, request, jsonify
 
 # Define the initial state of comments_db
@@ -8,16 +9,16 @@ _initial_comments_db_state = {
 }
 
 # Use a module-level global dictionary for comments_db
-# Initialize it directly here.
-comments_db = {k: v.copy() for k, v in _initial_comments_db_state.items()}
+# Initialize it directly here using deepcopy for full independence
+comments_db = copy.deepcopy(_initial_comments_db_state)
 
 def initialize_comments_db():
     """
     Resets the comments_db to its default state.
     """
-    # Directly clear and update the existing global dictionary
+    # Directly clear and update the existing global dictionary using deepcopy
     comments_db.clear()
-    comments_db.update({k: v.copy() for k, v in _initial_comments_db_state.items()})
+    comments_db.update(copy.deepcopy(_initial_comments_db_state))
 
 def create_app():
     app = Flask(__name__)
@@ -77,8 +78,7 @@ def create_app():
         
         comment['likes'] -= 1
         comment['liked_by'].remove(user_id)
-        return jsonify({"message": "Comment unliked successfully", "comment": comment}), 200
-
+        return jsonify({"message": "Comment unliked successfully", "comment": comment}), 200\n
     @app.route('/api/comments', methods=['GET'])
     def get_comments():
         """
