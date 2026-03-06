@@ -30,7 +30,8 @@ def create_app():
         """
         return render_template('index.html', comments=comments_db)
 
-    @app.route('/api/like/<comment_id>', methods=['POST'])
+    # Changed API routes to include a distinct prefix
+    @app.route('/comments-api/like/<comment_id>', methods=['POST'])
     def like_comment(comment_id: str):
         """
         Handles liking a comment.
@@ -54,7 +55,7 @@ def create_app():
         comment['liked_by'].append(user_id)
         return jsonify({"message": "Comment liked successfully", "comment": comment}), 200
 
-    @app.route('/api/unlike/<comment_id>', methods=['POST'])
+    @app.route('/comments-api/unlike/<comment_id>', methods=['POST'])
     def unlike_comment(comment_id: str):
         """
         Handles unliking a comment.
@@ -78,7 +79,7 @@ def create_app():
         comment['liked_by'].remove(user_id)
         return jsonify({"message": "Comment unliked successfully", "comment": comment}), 200
 
-    @app.route('/api/comments', methods=['GET'])
+    @app.route('/comments-api/comments', methods=['GET'])
     def get_comments():
         """
         Returns all comments, optionally sorted by popularity.
@@ -104,7 +105,7 @@ def create_app():
         
         return jsonify(comments_list), 200
 
-    @app.route('/api/delete_user_likes/<user_id>', methods=['POST'])
+    @app.route('/comments-api/delete_user_likes/<user_id>', methods=['POST'])
     def delete_user_likes(user_id: str):
         """
         Simulates user account deletion by removing all likes from a specific user.
@@ -123,7 +124,7 @@ def create_app():
                 likes_removed_count += 1
         return jsonify({"message": f"Removed {likes_removed_count} likes for user {user_id}"}), 200
 
-    @app.route('/api/delete_comment/<comment_id>', methods=['POST'])
+    @app.route('/comments-api/delete_comment/<comment_id>', methods=['POST'])
     def delete_comment_endpoint(comment_id: str):
         """
         Simulates comment deletion by removing the comment and its associated likes.
@@ -139,7 +140,7 @@ def create_app():
             return jsonify({"message": f"Comment {comment_id} and its likes deleted."}), 200
         return jsonify({"error": "Comment not found"}), 404
 
-    @app.route('/api/reset_comments', methods=['POST'])
+    @app.route('/comments-api/reset_comments', methods=['POST'])
     def reset_comments():
         """
         Resets the comments_db to its initial state.
