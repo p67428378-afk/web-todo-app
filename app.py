@@ -17,11 +17,13 @@ def initialize_comments_db():
     global comments_db
     comments_db = {k: v.copy() for k, v in _initial_comments_db_state.items()}
 
+# Initialize comments_db when the module is loaded, once.
+initialize_comments_db()
+
 def create_app():
     app = Flask(__name__)
 
-    # Initialize comments_db when the application starts
-    initialize_comments_db()
+    # Routes will now operate on the already initialized module-level comments_db
 
     @app.route('/')
     def index():
@@ -30,7 +32,6 @@ def create_app():
         """
         return render_template('index.html', comments=comments_db)
 
-    # Reverted API routes back to /api/ to match test suite expectations
     @app.route('/api/like/<comment_id>', methods=['POST'])
     def like_comment(comment_id: str):
         """
