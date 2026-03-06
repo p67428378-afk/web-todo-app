@@ -8,17 +8,16 @@ _initial_comments_db_state = {
 }
 
 # Use a module-level global dictionary for comments_db
-comments_db = {}
+# Initialize it directly here.
+comments_db = {k: v.copy() for k, v in _initial_comments_db_state.items()}
 
 def initialize_comments_db():
     """
-    Initializes or resets the comments_db to its default state.
+    Resets the comments_db to its default state.
     """
-    global comments_db
-    comments_db = {k: v.copy() for k, v in _initial_comments_db_state.items()}
-
-# Initialize comments_db when the module is loaded, once.
-initialize_comments_db()
+    # Directly clear and update the existing global dictionary
+    comments_db.clear()
+    comments_db.update({k: v.copy() for k, v in _initial_comments_db_state.items()})
 
 def create_app():
     app = Flask(__name__)
