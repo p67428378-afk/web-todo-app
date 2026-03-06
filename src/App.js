@@ -6,7 +6,7 @@
  * Notes: Switches between LoginPage and TodoList based on login status.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import LoginPage from './components/LoginPage';
 import TodoList from './components/TodoList';
 
@@ -16,16 +16,7 @@ import TodoList from './components/TodoList';
  * @returns {JSX.Element}
  */
 function App() {
-  const [is_logged_in, set_is_logged_in] = useState(() => {
-    // Initialize from localStorage, default to false
-    const stored_login_status = localStorage.getItem('is_logged_in');
-    return stored_login_status === 'true';
-  });
-
-  useEffect(() => {
-    // Update localStorage whenever is_logged_in changes
-    localStorage.setItem('is_logged_in', is_logged_in);
-  }, [is_logged_in]);
+  const [is_logged_in, set_is_logged_in] = useState(false);
 
   const handle_login_success = () => {
     set_is_logged_in(true);
