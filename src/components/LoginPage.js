@@ -3,10 +3,11 @@
  * Purpose: React component for a dummy login page.
  * Author: Developer_Agent
  * Created: 2026-02-27
- * Notes: Simulates login and redirects to the to-do list.
+ * Notes: Simulates login and navigates to the to-do list using react-router-dom.
  */
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * LoginPage component provides a simulated login interface.
@@ -18,12 +19,14 @@ const LoginPage = ({ on_login_success }) => {
   const [email, set_email] = useState('');
   const [username, set_username] = useState('');
   const [password, set_password] = useState('');
+  const navigate = useNavigate();
 
   const handle_login = (event) => {
     event.preventDefault();
     // Simulate successful login
     console.log('Simulating login with:', { email, username, password });
     on_login_success();
+    navigate('/todo'); // Navigate to the to-do list page
   };
 
   return (
