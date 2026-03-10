@@ -26,7 +26,8 @@ class User(Base):
     hashed_password = Column(String)
     role = Column(Enum(UserRole), default=UserRole.EMPLOYEE)
 
-    leave_requests = relationship("LeaveRequest", back_populates="employee")
+    submitted_leave_requests = relationship("LeaveRequest", foreign_keys="[LeaveRequest.user_id]", back_populates="employee")
+    managed_leave_requests = relationship("LeaveRequest", foreign_keys="[LeaveRequest.manager_id]", back_populates="manager")
     leave_balances = relationship("LeaveBalance", back_populates="user")
 
 class LeaveType(Base):
@@ -49,9 +50,9 @@ class LeaveRequest(Base):
     status = Column(Enum(LeaveStatus), default=LeaveStatus.PENDING)
     manager_id = Column(Integer, ForeignKey("users.id"), nullable=True) # For manager approval
 
-    employee = relationship("User", foreign_keys=[user_id], back_populates="leave_requests")
-    leave_type = relationship("LeaveType", back_populates="leave_requests")
-    manager = relationship("User", foreign_keys=[manager_id])
+    employee = relationship("User", foreign_keys=[user_id], back_populates="submitted_leave_requests")
+    leave_type = relationship("LeaveType", back_populates="leave_type")
+    manager = relationship("User", foreign_keys=[manager_id], back_populates="managed_leave_requests")
 
 class LeaveBalance(Base):
     __tablename__ = "leave_balances"
