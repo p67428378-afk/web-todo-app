@@ -51,7 +51,7 @@ class LeaveRequest(Base):
     manager_id = Column(Integer, ForeignKey("users.id"), nullable=True) # For manager approval
 
     employee = relationship("User", foreign_keys=[user_id], back_populates="submitted_leave_requests")
-    leave_type = relationship("LeaveType", back_populates="leave_type")
+    leave_type = relationship("LeaveType", back_populates="leave_requests")
     manager = relationship("User", foreign_keys=[manager_id], back_populates="managed_leave_requests")
 
 class LeaveBalance(Base):
