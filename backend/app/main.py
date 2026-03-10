@@ -1,10 +1,9 @@
 import logging
 from fastapi import FastAPI
-from .database import engine, Base
+from .database import app_engine, Base, get_db
 from .routers import auth, leave
 from . import models, crud, schemas
 from sqlalchemy.orm import Session
-from .database import get_db
 from fastapi import Depends
 from sqlalchemy.exc import OperationalError
 
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 # Create database tables
-Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=app_engine)
 
 # Include routers
 app.include_router(auth.router)
