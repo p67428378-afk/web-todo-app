@@ -63,7 +63,7 @@ async def startup_event():
                     max_days = None
                     if leave_type_name == models.LeaveTypeEnum.FLEXI:
                         max_days = 2 # As per HLD, 2 days per year for Flexi Holiday
-                    crud.create_leave_type(db, schemas.LeaveTypeCreate(name=leave_type_name, max_days_per_year=max_days)))
+                    crud.create_leave_type(db, schemas.LeaveTypeCreate(name=leave_type_name, max_days_per_year=max_days))
             logger.info("Default leave types initialized successfully.")
         except OperationalError as e:
             logger.warning(f"Database connection failed during startup event: {e}. Skipping default data initialization. This might be expected in a test environment if the test setup doesn't fully mock the DB for startup.")
