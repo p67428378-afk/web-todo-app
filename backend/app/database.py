@@ -9,6 +9,9 @@ Base = declarative_base()
 def get_application_database_url():
     return os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/leave_app_db")
 
+def is_test_environment():
+    return os.getenv("TESTING", "False").lower() == "true"
+
 def create_engine_and_session_factory(database_url: str, for_tests: bool = False):
     """
     Creates a SQLAlchemy engine and a sessionmaker factory.
