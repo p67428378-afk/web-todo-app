@@ -6,29 +6,34 @@ from sqlalchemy.pool import StaticPool
 
 Base = declarative_base()
 
-# Global variables to hold the engine and session, initialized dynamically
-_app_engine = None
-_AppSessionLocal = None
-
 def get_application_database_url():
     return os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/leave_app_db")
 
-def init_app_db():
-    global _app_engine, _AppSessionLocal
-    _app_engine = create_engine(get_application_database_url())
-    _AppSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_app_engine)
+def create_engine_and_session_factory(database_url: str, for_tests: bool = False):
+    """
+    Creates a SQLAlchemy engine and a sessionmaker factory.
+    If for_tests is True, it configures the engine for an in-memory SQLite database.
+    """
+    if for_tests:
+        # For tests, use an in-memory SQLite database with StaticPool
+        engine = create_engine(
+            database_url,
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+    else:
+        # For production, use the specified database URL
+        engine = create_engine(database_url)
 
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    return engine, SessionLocal
+
+# This is the default dependency function.
+# It will be overridden by the application's specific session factory
+# and by test-specific session factories.
 def get_db():
-    if _AppSessionLocal is None:
-        raise Exception("Database not initialized. Call init_app_db() or ensure test setup is correct.")
-    db = _AppSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-# This function is for tests to create their own engine and session
-def create_test_engine_and_session(test_database_url: str):
-    test_engine = create_engine(test_database_url, poolclass=StaticPool)
-    TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
-    return test_engine, TestSessionLocal
+    """
+    Placeholder for the database session dependency.
+    This function should always be overridden in actual application setup or tests.
+    """
+    raise NotImplementedError("get_db dependency must be overridden.")
