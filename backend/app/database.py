@@ -18,9 +18,9 @@ def create_engine_and_session_factory(database_url: str, for_tests: bool = False
     If for_tests is True, it configures the engine for an in-memory SQLite database.
     """
     if for_tests:
-        # For tests, use an in-memory SQLite database with StaticPool
+        # For tests, always use an in-memory SQLite database
         engine = create_engine(
-            database_url,
+            "sqlite:///:memory:", # Use in-memory SQLite for tests
             connect_args={"check_same_thread": False},
             poolclass=StaticPool,
         )
