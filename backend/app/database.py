@@ -6,27 +6,36 @@ from sqlalchemy.pool import StaticPool
 
 Base = declarative_base()
 
-def get_application_database_url():
-    return os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/leave_app_db")
-
 def is_test_environment():
     return os.getenv("TESTING", "False").lower() == "true"
+
+def get_application_database_url():
+    if is_test_environment():
+        # In test environment, always use in-memory SQLite
+        return "sqlite:///:memory:"
+    return os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/leave_app_db")
 
 def create_engine_and_session_factory(database_url: str, for_tests: bool = False):
     """
     Creates a SQLAlchemy engine and a sessionmaker factory.
     If for_tests is True, it configures the engine for an in-memory SQLite database.
     """
-    if for_tests:
-        # For tests, always use an in-memory SQLite database
-        engine = create_engine(
-            "sqlite:///:memory:", # Use in-memory SQLite for tests
-            connect_args={"check_same_thread": False},
-            poolclass=StaticPool,
-        )
-    else:
-        # For production, use the specified database URL
-        engine = create_engine(database_url)
+    # The database_url passed here will already be "sqlite:///:memory:" if for_tests is True
+    # due to the modification in get_application_database_url().
+    # This makes the logic more explicit and less prone to misinterpretation.
+    
+    # Conditional arguments for SQLite
+    connect_args = {}
+    poolclass = None
+    if "sqlite" in database_url:
+        connect_args = {"check_same_thread": False}
+        poolclass = StaticPool
+
+    engine = create_engine(
+        database_url,
+        connect_args=connect_args,
+        poolclass=poolclass,
+    )
 
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     return engine, SessionLocal
