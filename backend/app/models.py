@@ -33,7 +33,7 @@ class User(Base):
 class LeaveType(Base):
     __tablename__ = "leave_types"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(Enum(LeaveTypeEnum), unique=True, index=True)
+    name = Column(String, unique=True, index=True) # Changed from Enum(LeaveTypeEnum) to String
     max_days_per_year = Column(Integer, nullable=True) # For Flexi Holiday
 
     leave_requests = relationship("LeaveRequest", back_populates="leave_type")
