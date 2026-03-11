@@ -1,6 +1,6 @@
 import logging
 from fastapi import FastAPI, Depends
-from .database import Base, get_db, get_application_database_url, create_engine_and_session_factory
+from .database import Base, get_db, get_application_database_url, create_engine_and_session_factory, is_test_environment
 from .routers import auth, leave
 from . import models, crud, schemas
 from sqlalchemy.orm import Session
@@ -12,12 +12,11 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# Initialize app_engine and AppSessionLocal globally for the application
-# This will be overridden in tests
-app.state.app_engine, app.state.AppSessionLocal = create_engine_and_session_factory(get_application_database_url())
-
 # Override get_db to use the app's session local
 def get_app_db():
+    # Ensure app.state.AppSessionLocal is initialized before use
+    if not hasattr(app.state, 'AppSessionLocal'):
+        raise RuntimeError("Database session not initialized. Ensure startup_event has run.")
     db = app.state.AppSessionLocal()
     try:
         yield db
@@ -26,15 +25,28 @@ def get_app_db():
 
 app.dependency_overrides[get_db] = get_app_db
 
-# Create database tables
-Base.metadata.create_all(bind=app.state.app_engine)
-
 # Include routers
 app.include_router(auth.router)
 app.include_router(leave.router)
 
 @app.on_event("startup")
 async def startup_event():
+    logger.info("Running startup event...")
+    # Initialize app_engine and AppSessionLocal within the startup event
+    # This allows environment variables (like TESTING) to be set before initialization
+    database_url = get_application_database_url()
+    test_env = is_test_environment()
+    logger.info(f"Database URL: {database_url}, Test Environment: {test_env}")
+
+    app.state.app_engine, app.state.AppSessionLocal = create_engine_and_session_factory(
+        database_url,
+        for_tests=test_env
+    )
+
+    # Create database tables
+    Base.metadata.create_all(bind=app.state.app_engine)
+    logger.info("Database tables created/checked.")
+
     # Use the overridden get_db to get a session for startup tasks
     db_gen = app.dependency_overrides[get_db]()
     db = next(db_gen)
@@ -48,7 +60,7 @@ async def startup_event():
                 crud.create_leave_type(db, schemas.LeaveTypeCreate(name=leave_type_name, max_days_per_year=max_days))
         logger.info("Default leave types initialized successfully.")
     except OperationalError as e:
-        logger.warning(f"Database connection failed during startup event: {e}. Skipping default data initialization. This might be expected in a test environment.")
+        logger.warning(f"Database connection failed during startup event: {e}. Skipping default data initialization. This might be expected in a test environment if the test setup doesn't fully mock the DB for startup.")
     except Exception as e:
         logger.error(f"An unexpected error occurred during startup event: {e}")
     finally:
