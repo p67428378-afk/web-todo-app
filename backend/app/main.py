@@ -1,6 +1,6 @@
 import logging
 from fastapi import FastAPI, Depends
-from .database import Base, get_db, app_engine, AppSessionLocal, get_application_database_url, create_engine_and_session
+from .database import Base, get_db, get_application_database_url, create_engine_and_session_factory
 from .routers import auth, leave
 from . import models, crud, schemas
 from sqlalchemy.orm import Session
@@ -14,7 +14,7 @@ app = FastAPI()
 
 # Initialize app_engine and AppSessionLocal globally for the application
 # This will be overridden in tests
-app.state.app_engine, app.state.AppSessionLocal = create_engine_and_session(get_application_database_url())
+app.state.app_engine, app.state.AppSessionLocal = create_engine_and_session_factory(get_application_database_url())
 
 # Override get_db to use the app's session local
 def get_app_db():
@@ -34,7 +34,10 @@ app.include_router(auth.router)
 app.include_router(leave.router)
 
 @app.on_event("startup")
-async def startup_event(db: Session = Depends(get_db)):
+async def startup_event():
+    # Use the overridden get_db to get a session for startup tasks
+    db_gen = app.dependency_overrides[get_db]()
+    db = next(db_gen)
     try:
         # Initialize default leave types if they don't exist
         for leave_type_name in models.LeaveTypeEnum:
@@ -48,6 +51,12 @@ async def startup_event(db: Session = Depends(get_db)):
         logger.warning(f"Database connection failed during startup event: {e}. Skipping default data initialization. This might be expected in a test environment.")
     except Exception as e:
         logger.error(f"An unexpected error occurred during startup event: {e}")
+    finally:
+        # Ensure the session is closed
+        try:
+            next(db_gen, None) # Close the session if it hasn't been already
+        except StopIteration:
+            pass
 
 
 @app.get("/")
