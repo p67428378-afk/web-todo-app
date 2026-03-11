@@ -10,20 +10,14 @@ def is_test_environment():
     return os.getenv("TESTING", "False").lower() == "true"
 
 def get_application_database_url():
-    if is_test_environment():
-        # In test environment, always use in-memory SQLite
-        return "sqlite:///:memory:"
+    # This function will now always return the configured URL,
+    # and main.py will handle the override for testing.
     return os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/leave_app_db")
 
-def create_engine_and_session_factory(database_url: str, for_tests: bool = False):
+def create_engine_and_session_factory(database_url: str): # Removed for_tests parameter
     """
     Creates a SQLAlchemy engine and a sessionmaker factory.
-    If for_tests is True, it configures the engine for an in-memory SQLite database.
     """
-    # If for_tests is True, explicitly override database_url to ensure in-memory SQLite
-    if for_tests:
-        database_url = "sqlite:///:memory:"
-        
     # Conditional arguments for SQLite
     connect_args = {}
     poolclass = None
