@@ -20,10 +20,10 @@ def create_engine_and_session_factory(database_url: str, for_tests: bool = False
     Creates a SQLAlchemy engine and a sessionmaker factory.
     If for_tests is True, it configures the engine for an in-memory SQLite database.
     """
-    # The database_url passed here will already be "sqlite:///:memory:" if for_tests is True
-    # due to the modification in get_application_database_url().
-    # This makes the logic more explicit and less prone to misinterpretation.
-    
+    # If for_tests is True, explicitly override database_url to ensure in-memory SQLite
+    if for_tests:
+        database_url = "sqlite:///:memory:"
+        
     # Conditional arguments for SQLite
     connect_args = {}
     poolclass = None
