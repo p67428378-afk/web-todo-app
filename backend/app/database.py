@@ -8,16 +8,14 @@ Base = declarative_base()
 def get_application_database_url():
     return os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/leave_app_db")
 
-def create_app_engine():
-    return create_engine(get_application_database_url())
+def create_engine_and_session(database_url: str):
+    engine = create_engine(database_url)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    return engine, SessionLocal
 
-def create_app_session_local(engine_instance):
-    return sessionmaker(autocommit=False, autoflush=False, bind=engine_instance)
-
-# Global engine and SessionLocal for the application
-# These will be initialized once when the module is imported
-app_engine = create_app_engine()
-AppSessionLocal = create_app_session_local(app_engine)
+# These will be initialized in main.py or overridden for tests
+app_engine = None
+AppSessionLocal = None
 
 def get_db():
     db = AppSessionLocal()
@@ -28,6 +26,6 @@ def get_db():
 
 # This function is for tests to create their own engine and session
 def create_test_engine_and_session(test_database_url: str):
-    test_engine = create_engine(test_database_url)
+    test_engine = create_engine(test_database_url, poolclass=StaticPool)
     TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
     return test_engine, TestSessionLocal
