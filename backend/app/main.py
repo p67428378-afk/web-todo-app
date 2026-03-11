@@ -1,6 +1,6 @@
 import logging
 from fastapi import FastAPI, Depends
-from .database import Base, get_db, app_engine
+from .database import Base, get_db, app_engine, AppSessionLocal, get_application_database_url, create_engine_and_session
 from .routers import auth, leave
 from . import models, crud, schemas
 from sqlalchemy.orm import Session
@@ -12,8 +12,22 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+# Initialize app_engine and AppSessionLocal globally for the application
+# This will be overridden in tests
+app.state.app_engine, app.state.AppSessionLocal = create_engine_and_session(get_application_database_url())
+
+# Override get_db to use the app's session local
+def get_app_db():
+    db = app.state.AppSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+app.dependency_overrides[get_db] = get_app_db
+
 # Create database tables
-Base.metadata.create_all(bind=app_engine)
+Base.metadata.create_all(bind=app.state.app_engine)
 
 # Include routers
 app.include_router(auth.router)
