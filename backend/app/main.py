@@ -1,4 +1,5 @@
 import logging
+import os # Import os
 from fastapi import FastAPI, Depends
 from .database import Base, get_db, get_application_database_url, create_engine_and_session_factory, is_test_environment
 from .routers import auth, leave
@@ -32,15 +33,19 @@ app.include_router(leave.router)
 @app.on_event("startup")
 async def startup_event():
     logger.info("Running startup event...")
-    # Initialize app_engine and AppSessionLocal within the startup event
-    # This allows environment variables (like TESTING) to be set before initialization
-    database_url = get_application_database_url()
+    
     test_env = is_test_environment()
+    
+    # Explicitly set database_url for test environment to ensure in-memory SQLite
+    if test_env:
+        database_url = "sqlite:///:memory:"
+    else:
+        database_url = get_application_database_url() # Use the original logic for non-test environments
+    
     logger.info(f"Database URL: {database_url}, Test Environment: {test_env}")
 
     app.state.app_engine, app.state.AppSessionLocal = create_engine_and_session_factory(
-        database_url,
-        for_tests=test_env
+        database_url
     )
 
     # Create database tables
@@ -58,7 +63,7 @@ async def startup_event():
                     max_days = None
                     if leave_type_name == models.LeaveTypeEnum.FLEXI:
                         max_days = 2 # As per HLD, 2 days per year for Flexi Holiday
-                    crud.create_leave_type(db, schemas.LeaveTypeCreate(name=leave_type_name, max_days_per_year=max_days))
+                    crud.create_leave_type(db, schemas.LeaveTypeCreate(name=leave_type_name, max_days_per_year=max_days)))
             logger.info("Default leave types initialized successfully.")
         except OperationalError as e:
             logger.warning(f"Database connection failed during startup event: {e}. Skipping default data initialization. This might be expected in a test environment if the test setup doesn't fully mock the DB for startup.")
